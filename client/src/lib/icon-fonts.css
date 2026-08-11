@@ -1,0 +1,47 @@
+/* Self-hosted icon fonts pulled directly from the original WordPress theme/plugins
+   (thim-elementor-kit, elementskit-lite, unlimited-elements font-awesome6 bundle)
+   so the "Why Choose Us" icons render as the exact original glyphs. */
+
+@font-face {
+  font-family: "thim-ekits";
+  src: url("/fonts/thim-ekits.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "elementskit";
+  src: url("/fonts/elementskit.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "fa-solid";
+  src: url("/fonts/fa-solid-900.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+.hw-icon {
+  font-style: normal;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+}
+.hw-icon.tk::before { font-family: "thim-ekits"; }
+.hw-icon.ek::before { font-family: "elementskit"; }
+.hw-icon.fa::before { font-family: "fa-solid"; font-weight: 900; }
+
+.hw-icon.tk-learning1::before { content: "\ea19"; }
+.hw-icon.tk-exam::before { content: "\e929"; }
+.hw-icon.icon-Rating::before { content: "\ebd8"; }
+.hw-icon.icon-page-list::before { content: "\ebf1"; }
+.hw-icon.icon-Document-Search::before { content: "\ebbc"; }
+.hw-icon.icon-star::before { content: "\eac1"; }
+.hw-icon.fa-chalkboard::before { content: "\f51b"; }
+.hw-icon.fa-recycle::before { content: "\f1b8"; }
+.hw-icon.fa-users::before { content: "\f0c0"; }
+.hw-icon.fa-award::before { content: "\f559"; }
+.hw-icon.fa-user-tie::before { content: "\f508"; }
+.hw-icon.fa-star::before { content: "\f005"; }

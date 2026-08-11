@@ -1,0 +1,65 @@
+import { Router } from "express";
+import { prisma } from "../lib/prisma.js";
+import { requireAuth, requirePermission } from "../lib/auth.js";
+import { upload } from "../lib/upload.js";
+
+export const mediaRouter = Router();
+
+mediaRouter.get("/", requireAuth, requirePermission("media"), async (_req, res) => {
+  res.json(await prisma.media.findMany({ orderBy: { createdAt: "desc" } }));
+});
+
+mediaRouter.post("/", requireAuth, requirePermission("media"), (req, res, next) => {
+  upload.single("file")(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    next();
+  });
+}, async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+
+  const media = await prisma.media.create({
+    data: {
+      filename: req.file.filename,
+      url: `/uploads/${req.file.filename}`,
+      mimeType: req.file.mimetype,
+      sizeBytes: req.file.size,
+    },
+  });
+  res.status(201).json(media);
+});
+
+// Finds which posts/courses/events reference a given media file, so the admin
+// can tell what a file is actually used for. Matches by filename rather than
+// the stored `url` — migrated content still embeds the file's original
+// https://csbias.com/... URL (never rewritten), while newly-inserted embeds
+// use the local /uploads/... path. The filename is the one thing both forms share.
+mediaRouter.get("/:id/usage", requireAuth, requirePermission("media"), async (req, res) => {
+  const media = await prisma.media.findUnique({ where: { id: Number(req.params.id) } });
+  if (!media) return res.status(404).json({ error: "Media not found" });
+
+  const [posts, courses, events] = await Promise.all([
+    prisma.post.findMany({
+      where: { content: { contains: media.filename } },
+      select: { id: true, title: true, slug: true },
+    }),
+    prisma.course.findMany({
+      where: { description: { contains: media.filename } },
+      select: { id: true, title: true, slug: true },
+    }),
+    prisma.event.findMany({
+      where: { description: { contains: media.filename } },
+      select: { id: true, title: true, slug: true },
+    }),
+  ]);
+
+  res.json({
+    posts: posts.map((p) => ({ ...p, type: "post" })),
+    courses: courses.map((c) => ({ ...c, type: "course" })),
+    events: events.map((e) => ({ ...e, type: "event" })),
+  });
+});
+
+mediaRouter.delete("/:id", requireAuth, requirePermission("media"), async (req, res) => {
+  await prisma.media.delete({ where: { id: Number(req.params.id) } });
+  res.status(204).end();
+});

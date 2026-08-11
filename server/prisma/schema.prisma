@@ -1,0 +1,202 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Admin / Auth ---------------------------------------------------------
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("admin") // "super_admin" | "admin" — super_admin bypasses `permissions` entirely
+  permissions  Json     @default("[]") // array of resource keys this admin may access, e.g. ["posts","media"]
+  createdAt    DateTime @default(now())
+}
+
+// --- Blog (wp_posts post_type = 'post') -----------------------------------
+
+model Post {
+  id          Int       @id @default(autoincrement())
+  title       String    @db.VarChar(500)
+  slug        String    @unique
+  excerpt     String?   @db.Text
+  content     String    @db.LongText
+  featuredImg String?
+  status      String    @default("draft") // "draft" | "published"
+  categories  Category[] @relation("PostCategories")
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // preserves the original WordPress post id for migration traceability
+  wpPostId    Int?      @unique
+}
+
+model Category {
+  id           Int     @id @default(autoincrement())
+  name         String
+  slug         String  @unique
+  defaultImage String? @db.Text // pre-filled as the Featured Image when this category is picked on a new post
+  posts        Post[]  @relation("PostCategories")
+}
+
+// --- Static Pages (wp_posts post_type = 'page') ---------------------------
+
+model Page {
+  id        Int      @id @default(autoincrement())
+  title     String   @db.VarChar(500)
+  slug      String   @unique
+  content   String   @db.LongText
+  status    String   @default("draft")
+  updatedAt DateTime @updatedAt
+  wpPostId  Int?     @unique
+}
+
+// --- Courses ----------------------------------------------------------------
+// wp_posts post_type = 'course' (generic) plus the site's 4 dedicated course
+// post types, which is what the "Courses" nav dropdown actually links to:
+// general_studies_pcm | test_series | mission_ekalavya | degree_civils
+
+model Course {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(500)
+  slug        String   @unique
+  summary     String?  @db.Text
+  description String   @db.LongText
+  thumbnail   String?
+  price       Decimal? @db.Decimal(10, 2)
+  duration    String?
+  courseType  String?  // general_studies_pcm | test_series | mission_ekalavya | degree_civils | null (generic)
+  status      String   @default("draft")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  wpPostId    Int?     @unique
+}
+
+// --- Homepage hero slider ----------------------------------------------------
+
+model Slide {
+  id        Int      @id @default(autoincrement())
+  imageUrl  String   @db.Text
+  linkUrl   String?  @db.Text
+  order     Int      @default(0)
+  status    String   @default("draft")
+  createdAt DateTime @default(now())
+}
+
+// --- Quizzes (wp_aysquiz_* tables) -----------------------------------------
+
+model Quiz {
+  id          Int            @id @default(autoincrement())
+  title       String         @db.VarChar(500)
+  slug        String         @unique
+  description String?        @db.Text
+  timeLimitSec Int?
+  status      String         @default("draft")
+  questions   QuizQuestion[]
+  attempts    QuizAttempt[]
+  createdAt   DateTime       @default(now())
+  wpQuizId    Int?           @unique
+}
+
+model QuizQuestion {
+  id            Int      @id @default(autoincrement())
+  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quizId        Int
+  question      String   @db.Text
+  options       Json     // [{ id, text }]
+  correctOption String
+  order         Int      @default(0)
+  wpQuestionId  Int?     @unique
+}
+
+model QuizAttempt {
+  id          Int      @id @default(autoincrement())
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quizId      Int
+  userName    String
+  userEmail   String
+  answers     Json     // { [questionId]: selectedOptionId }
+  score       Int
+  totalPoints Int
+  startedAt   DateTime
+  submittedAt DateTime @default(now())
+}
+
+// --- Events (wp_tec_events / wp_e_events) -----------------------------------
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(500)
+  slug        String   @unique
+  description String?  @db.LongText
+  location    String?
+  startAt     DateTime
+  endAt       DateTime?
+  status      String   @default("draft")
+  wpEventId   Int?     @unique
+}
+
+// --- Forms (wpforms / formidable entries) -----------------------------------
+
+model FormSubmission {
+  id        Int      @id @default(autoincrement())
+  formName  String   // e.g. "admission-enquiry", "contact"
+  data      Json      // arbitrary field map
+  createdAt DateTime @default(now())
+}
+
+// --- Media library (wp-content/uploads) --------------------------------------
+
+model Media {
+  id        Int      @id @default(autoincrement())
+  filename  String   @db.VarChar(500)
+  url       String   @db.Text
+  mimeType  String?
+  sizeBytes Int?
+  createdAt DateTime @default(now())
+  wpAttachmentId Int? @unique
+}
+
+// --- Homepage content blocks --------------------------------------------------
+// Pulled out of the homepage's Elementor widget tree (not a WP post type — this
+// content only exists inside a big JSON blob), grouped by the section it came
+// from: latest_updates (the marquee ticker), why_choose_us, exam_stages, locations.
+
+model HomeHighlight {
+  id          Int      @id @default(autoincrement())
+  group       String
+  title       String?  @db.VarChar(300)
+  description String?  @db.Text
+  imageUrl    String?
+  linkUrl     String?  @db.Text
+  iconClass   String? // e.g. "tk tk-learning1" — maps to a class in client/src/lib/icon-fonts.css
+  variant     String? // "dark" | "light" — alternating card style on the why_choose_us group
+  order       Int      @default(0)
+  status      String   @default("published")
+}
+
+model Testimonial {
+  id          Int      @id @default(autoincrement())
+  name        String
+  designation String?
+  review      String   @db.Text
+  photoUrl    String?
+  linkUrl     String?  @db.Text
+  order       Int      @default(0)
+  status      String   @default("published")
+}
+
+model Faq {
+  id       Int    @id @default(autoincrement())
+  question String @db.VarChar(500)
+  answer   String @db.Text
+  order    Int    @default(0)
+  status   String @default("published")
+}

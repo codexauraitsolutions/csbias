@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-white text-gray-900;
+  overflow-x: hidden;
+}
+
+/* Breaks a section out of its centered max-width parent to span the full
+   viewport width — used for sections whose background color must run edge
+   to edge (matches several full-bleed sections on the original site). */
+.full-bleed {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+}
