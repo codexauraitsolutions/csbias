@@ -3,6 +3,8 @@
 // markup the WordPress migration produces, so new posts render identically
 // to migrated ones (see server/src/scripts/migrate-from-wp.js resolvePdfEmbeds).
 
+import { newId } from "./uuid.js";
+
 function escapeHtml(str) {
   return str.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
@@ -43,7 +45,7 @@ export function parseContentToSections(html) {
       consumed.add(el);
     } else if (el.classList?.contains("pdf-embed")) {
       const link = el.querySelector("a[href]");
-      sections.push({ id: crypto.randomUUID(), label: pendingLabel || "", pdfUrl: link?.getAttribute("href") || "" });
+      sections.push({ id: newId(), label: pendingLabel || "", pdfUrl: link?.getAttribute("href") || "" });
       consumed.add(el);
       pendingLabel = null;
     }

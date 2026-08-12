@@ -6,11 +6,12 @@ import ImageUploader from "../components/ImageUploader.jsx";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { buildContentFromSections, parseContentToSections } from "../lib/pdfSections.js";
 import { extractPdfLinks } from "../lib/extractPdfLinks.js";
+import { newId } from "../lib/uuid.js";
 
 const EMPTY = { title: "", excerpt: "", content: "", featuredImg: "", status: "draft", categoryIds: [] };
 
 function newSection() {
-  return { id: crypto.randomUUID(), label: "", pdfUrl: "" };
+  return { id: newId(), label: "", pdfUrl: "" };
 }
 
 export default function PostEditor() {
