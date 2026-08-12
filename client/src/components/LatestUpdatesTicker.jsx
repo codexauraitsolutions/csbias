@@ -16,7 +16,7 @@ export default function LatestUpdatesTicker({ title, description, items }) {
             <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
             LATEST UPDATES
           </div>
-          <div className="overflow-hidden flex-1">
+          <div className="overflow-hidden flex-1 min-w-0">
             <div className="flex items-center gap-10 py-3 px-6 whitespace-nowrap animate-[marquee_25s_linear_infinite] hover:[animation-play-state:paused]">
               {[...items, ...items].map((item, i) => (
                 <a

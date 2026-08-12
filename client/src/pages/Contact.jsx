@@ -111,6 +111,17 @@ export default function Contact() {
           )}
         </div>
       </div>
+
+      <div className="mt-14 max-w-4xl mx-auto rounded-xl overflow-hidden border">
+        <iframe
+          title="CSB IAS Academy location"
+          src="https://maps.google.com/maps?q=CF6Q%2B8CJ%20Hyderabad%2C%20Telangana&t=m&z=15&output=embed&iwloc=near"
+          className="w-full h-[330px]"
+          style={{ border: 0 }}
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      </div>
     </div>
   );
 }
