@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useFetch } from "../lib/useFetch.js";
 import { api } from "../lib/api.js";
 import { sanitizeHtml } from "../lib/sanitize.js";
+import { rewriteContentUploadUrls } from "../lib/mediaUrl.js";
 
 export default function StaticPage() {
   const { slug } = useParams();
@@ -16,7 +17,10 @@ export default function StaticPage() {
         ← Back to Home
       </Link>
       <h1 className="text-3xl font-bold mt-3 mb-6 text-center">{page.title}</h1>
-      <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHtml(page.content) }} />
+      <div
+        className="prose max-w-none"
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(rewriteContentUploadUrls(page.content)) }}
+      />
     </article>
   );
 }

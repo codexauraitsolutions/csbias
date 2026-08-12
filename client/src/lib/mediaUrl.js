@@ -9,3 +9,10 @@ export function mediaUrl(url) {
   if (!url) return url;
   return /^https?:\/\//.test(url) ? url : `${ORIGIN}${url}`;
 }
+
+// Migrated Page.content is a raw HTML blob (not a single image field), so
+// individual <img>/<a> references to "/uploads/..." can't call mediaUrl()
+// themselves — rewrite them at the string level before rendering instead.
+export function rewriteContentUploadUrls(html) {
+  return (html || "").replaceAll('="/uploads/', `="${ORIGIN}/uploads/`);
+}
