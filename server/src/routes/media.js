@@ -5,11 +5,21 @@ import { upload } from "../lib/upload.js";
 
 export const mediaRouter = Router();
 
-mediaRouter.get("/", requireAuth, requirePermission("media"), async (_req, res) => {
+// Listing and uploading are intentionally open to any logged-in admin, not
+// gated behind the "media" permission — every content page's image/PDF
+// picker (posts, slides, etc.) depends on these two endpoints, and what
+// actually matters is whether the admin can edit the content they're
+// attaching a file to (already checked by that resource's own permission).
+// Requiring "media" as a *second*, separate grant just to use an upload
+// button embedded in a page they already have access to was confusing and
+// broke those pages for admins who were never given that extra toggle.
+// Browsing/deleting the standalone Media Library page below stays gated,
+// since removing a shared file can break content elsewhere on the site.
+mediaRouter.get("/", requireAuth, async (_req, res) => {
   res.json(await prisma.media.findMany({ orderBy: { createdAt: "desc" } }));
 });
 
-mediaRouter.post("/", requireAuth, requirePermission("media"), (req, res, next) => {
+mediaRouter.post("/", requireAuth, (req, res, next) => {
   upload.single("file")(req, res, (err) => {
     if (err) return res.status(400).json({ error: err.message });
     next();

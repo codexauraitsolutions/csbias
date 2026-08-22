@@ -4,6 +4,7 @@ import { api } from "../lib/api.js";
 import PdfPicker from "../components/PdfPicker.jsx";
 import ImageUploader from "../components/ImageUploader.jsx";
 import { useAuth } from "../lib/AuthContext.jsx";
+import { useToast } from "../lib/ToastContext.jsx";
 import { buildContentFromSections, parseContentToSections } from "../lib/pdfSections.js";
 import { extractPdfLinks } from "../lib/extractPdfLinks.js";
 import { newId } from "../lib/uuid.js";
@@ -19,6 +20,7 @@ export default function PostEditor() {
   const isNew = id === "new";
   const navigate = useNavigate();
   const { admin } = useAuth();
+  const { showToast } = useToast();
   const isSuperAdmin = admin?.role === "super_admin";
 
   const [form, setForm] = useState(EMPTY);
@@ -91,14 +93,14 @@ export default function PostEditor() {
     try {
       const payload = { ...form, status };
       if (isNew) {
-        const created = await api.posts.create(payload);
-        navigate(`/posts/${created.id}`);
+        await api.posts.create(payload);
       } else {
         await api.posts.update(id, payload);
       }
+      showToast(status === "published" ? "Post published successfully" : "Saved as draft");
+      navigate("/posts");
     } catch (err) {
       setError(err.message);
-    } finally {
       setSaving(false);
     }
   }

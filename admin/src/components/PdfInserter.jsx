@@ -20,10 +20,14 @@ export default function PdfInserter({ quillRef }) {
   const [open, setOpen] = useState(false);
   const [pdfs, setPdfs] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (open && !pdfs) {
-      api.media.list().then((all) => setPdfs(all.filter((m) => m.mimeType === "application/pdf")));
+      api.media
+        .list()
+        .then((all) => setPdfs(all.filter((m) => m.mimeType === "application/pdf")))
+        .catch((err) => setError(err.message));
     }
   }, [open, pdfs]);
 
@@ -43,11 +47,14 @@ export default function PdfInserter({ quillRef }) {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
+    setError(null);
     try {
       const media = await api.media.upload(file);
       setPdfs((prev) => [media, ...(prev || [])]);
       insertAtCursor(embedHtml(`${ORIGIN}${media.url}`));
       setOpen(false);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -71,9 +78,10 @@ export default function PdfInserter({ quillRef }) {
             <input type="file" accept=".pdf" className="hidden" onChange={handleUpload} disabled={uploading} />
           </label>
 
+          {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
           <p className="text-xs text-gray-400 mb-1">Or choose an existing PDF:</p>
           <div className="max-h-56 overflow-y-auto space-y-1">
-            {pdfs === null && <p className="text-xs text-gray-400">Loading…</p>}
+            {pdfs === null && !error && <p className="text-xs text-gray-400">Loading…</p>}
             {pdfs?.length === 0 && <p className="text-xs text-gray-400">No PDFs uploaded yet.</p>}
             {pdfs?.map((m) => (
               <button
